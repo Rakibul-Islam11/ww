@@ -1,6 +1,17 @@
 // File: /api/create-order.js
 
 export default async function handler(req, res) {
+    // ✅ Step 0: Add CORS Headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // ✅ Step 1: Handle preflight request
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end(); // respond OK to OPTIONS
+    }
+
+    // ✅ Step 2: Only allow POST
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Only POST requests allowed' });
     }
@@ -17,7 +28,7 @@ export default async function handler(req, res) {
         const PATHAO_USERNAME = process.env.PATHAO_USERNAME;
         const PATHAO_PASSWORD = process.env.PATHAO_PASSWORD;
 
-        // Step 1: Get Auth Token
+        // Step 3: Get Auth Token
         const authRes = await fetch('https://api-hermes.pathao.com/aladdin/api/v1/issue-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -35,7 +46,7 @@ export default async function handler(req, res) {
 
         if (!token) return res.status(401).json({ message: 'Authentication failed' });
 
-        // Step 2: Create Order
+        // Step 4: Create Order
         const orderRes = await fetch('https://api-hermes.pathao.com/aladdin/api/v1/merchant/orders', {
             method: 'POST',
             headers: {
@@ -43,12 +54,12 @@ export default async function handler(req, res) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                store_id: 1, // use your actual store ID
+                store_id: 1, // ✅ Update this with your actual store ID
                 merchant_order_id: Math.random().toString(36).substr(2, 9),
                 item_type: 'parcel',
                 item_description: productName,
                 recipient_name: 'Customer Name',
-                recipient_phone: '018XXXXXXXX',
+                recipient_phone: '018XXXXXXXX', // ✅ update with real phone if available
                 delivery_address: deliveryAddress,
                 cash_collection_amount: productPrice,
                 parcel_weight: 1,
