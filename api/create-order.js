@@ -1,17 +1,18 @@
 // File: /api/create-order.js
 
 export default async function handler(req, res) {
-    // ✅ Step 0: Add CORS Headers
+    // ✅ Step 0: CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     // ✅ Step 1: Handle preflight request
     if (req.method === 'OPTIONS') {
-        return res.status(200).end(); // respond OK to OPTIONS
+        res.status(200).send('OK'); // send something, not just end()
+        return;
     }
 
-    // ✅ Step 2: Only allow POST
+    // ✅ Step 2: Allow only POST
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Only POST requests allowed' });
     }
@@ -54,12 +55,12 @@ export default async function handler(req, res) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                store_id: 1, // ✅ Update this with your actual store ID
+                store_id: 1,
                 merchant_order_id: Math.random().toString(36).substr(2, 9),
                 item_type: 'parcel',
                 item_description: productName,
                 recipient_name: 'Customer Name',
-                recipient_phone: '018XXXXXXXX', // ✅ update with real phone if available
+                recipient_phone: '018XXXXXXXX',
                 delivery_address: deliveryAddress,
                 cash_collection_amount: productPrice,
                 parcel_weight: 1,
@@ -71,7 +72,6 @@ export default async function handler(req, res) {
         });
 
         const orderData = await orderRes.json();
-
         return res.status(200).json(orderData);
 
     } catch (error) {

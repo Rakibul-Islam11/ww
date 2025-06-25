@@ -16,7 +16,7 @@ const PurchasePage = () => {
 
         try {
             // পরিবর্তন করো এটাতে:
-            const res = await fetch('https://ww-k6opclhq6-rakibs-projects-e68e1ada.vercel.app/api/create-order', {
+            const res = await fetch('https://ww-702kegdjg-rakibs-projects-e68e1ada.vercel.app/api/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -41,7 +41,7 @@ const PurchasePage = () => {
     };
     const checkTrackingStatus = async (trackingId) => {
         try {
-            const res = await fetch('https://rakibs-projects-e68e1ada.vercel.app/api/track-order', {
+            const res = await fetch('https://ww-702kegdjg-rakibs-projects-e68e1ada.vercel.app/api/track-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tracking_id: trackingId }),
