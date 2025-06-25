@@ -8,6 +8,56 @@ const PurchasePage = () => {
     if (!product) {
         return <div className="container mx-auto px-4 py-8 text-center">Product not found</div>;
     }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const address = e.target.elements.address.value;
+        const payment = e.target.elements.payment.value;
+
+        try {
+            const res = await fetch('/api/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productName: product.name,
+                    deliveryAddress: address,
+                    productPrice: product.price,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert(`Order Placed! Tracking ID: ${data.tracking_id}`);
+            } else {
+                alert(`Failed to place order: ${data.message}`);
+            }
+
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    };
+    const checkTrackingStatus = async (trackingId) => {
+        try {
+            const res = await fetch('/api/track-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tracking_id: trackingId }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                console.log('Tracking status:', data);
+                alert(`Order status: ${data.data?.order_status}`);
+            } else {
+                alert(`Failed to fetch status: ${data.message}`);
+            }
+
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -22,10 +72,11 @@ const PurchasePage = () => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">{product.name}</h2>
                     <p className="text-xl font-bold text-blue-600 mb-4">${product.price.toFixed(2)}</p>
 
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={handleSubmit}>
                         <div>
                             <label className="block text-gray-700 mb-2">Shipping Address</label>
                             <textarea
+                                name="address"
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 rows="3"
                                 required
@@ -34,7 +85,10 @@ const PurchasePage = () => {
 
                         <div>
                             <label className="block text-gray-700 mb-2">Payment Method</label>
-                            <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select
+                                name="payment"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
                                 <option>Credit Card</option>
                                 <option>PayPal</option>
                                 <option>Bank Transfer</option>
@@ -47,7 +101,15 @@ const PurchasePage = () => {
                         >
                             Confirm Purchase
                         </button>
+                        <button
+                            onClick={() => checkTrackingStatus('PA123456789')}
+                            className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
+                        >
+                            Check Order Status
+                        </button>
+
                     </form>
+
                 </div>
             </div>
         </div>
