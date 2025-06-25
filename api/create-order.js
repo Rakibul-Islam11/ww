@@ -1,5 +1,3 @@
-// File: /api/create-order.js
-
 export default async function handler(req, res) {
     // ✅ Step 0: CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,7 +6,7 @@ export default async function handler(req, res) {
 
     // ✅ Step 1: Handle preflight request
     if (req.method === 'OPTIONS') {
-        res.status(200).send('OK'); // send something, not just end()
+        res.status(200).send('OK');
         return;
     }
 
@@ -29,7 +27,7 @@ export default async function handler(req, res) {
         const PATHAO_USERNAME = process.env.PATHAO_USERNAME;
         const PATHAO_PASSWORD = process.env.PATHAO_PASSWORD;
 
-        // Step 3: Get Auth Token
+        // 🧪 Step 3: Get Auth Token
         const authRes = await fetch('https://api-hermes.pathao.com/aladdin/api/v1/issue-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -45,9 +43,16 @@ export default async function handler(req, res) {
         const authData = await authRes.json();
         const token = authData.access_token;
 
-        if (!token) return res.status(401).json({ message: 'Authentication failed' });
+        // 🧪 Debug block: যদি token না পাওয়া যায়
+        if (!token) {
+            console.error('🧪 Auth Error:', authData); // এখানে log হবে Vercel Console-এ
+            return res.status(401).json({
+                message: 'Authentication failed',
+                detail: authData,
+            });
+        }
 
-        // Step 4: Create Order
+        // ✅ Step 4: Create Order
         const orderRes = await fetch('https://api-hermes.pathao.com/aladdin/api/v1/merchant/orders', {
             method: 'POST',
             headers: {
@@ -75,6 +80,7 @@ export default async function handler(req, res) {
         return res.status(200).json(orderData);
 
     } catch (error) {
+        console.error('🧨 Server Error:', error); // extra debug
         return res.status(500).json({ message: 'Something went wrong', error: error.message });
     }
 }
