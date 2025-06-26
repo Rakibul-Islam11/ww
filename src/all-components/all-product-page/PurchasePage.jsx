@@ -1,64 +1,79 @@
-// PurchasePage.jsx
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 const PurchasePage = () => {
     const { state } = useLocation();
     const product = state?.product;
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [formData, setFormData] = useState({
+        shippingAddress: '',
+        paymentMethod: 'Credit Card'
+    });
 
     if (!product) {
         return <div className="container mx-auto px-4 py-8 text-center">Product not found</div>;
     }
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        const address = e.target.elements.address.value;
-        const payment = e.target.elements.payment.value;
+        setLoading(true);
+        setError(null);
 
         try {
-            // পরিবর্তন করো এটাতে:
-            const res = await fetch('https://ww-702kegdjg-rakibs-projects-e68e1ada.vercel.app/api/create-order', {
+            const orderData = {
+                // আপনার অর্ডার ডাটা
+            };
+
+            const response = await fetch('/api/create-order', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productName: product.name,
-                    deliveryAddress: address,
-                    productPrice: product.price,
-                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData)
             });
 
+            // প্রথমে রেসপন্স টেক্সট হিসেবে পড়ুন
+            const responseText = await response.text();
 
-            const data = await res.json();
-
-            if (res.ok) {
-                alert(`Order Placed! Tracking ID: ${data.tracking_id}`);
-            } else {
-                alert(`Failed to place order: ${data.message}`);
+            // তারপর JSON এ কনভার্ট করার চেষ্টা করুন
+            let data;
+            try {
+                data = responseText ? JSON.parse(responseText) : {};
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                throw new Error('Invalid server response');
             }
 
-        } catch (err) {
-            alert(`Error: ${err.message}`);
-        }
-    };
-    const checkTrackingStatus = async (trackingId) => {
-        try {
-            const res = await fetch('https://ww-702kegdjg-rakibs-projects-e68e1ada.vercel.app/api/track-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tracking_id: trackingId }),
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to create order');
+            }
+
+            // সাকসেস হলে নেভিগেট করুন
+            navigate('/track-order', {
+                state: {
+                    trackingId: data.tracking_id,
+                    orderDetails: {
+                        product,
+                        shippingAddress: formData.shippingAddress,
+                        paymentMethod: formData.paymentMethod
+                    }
+                }
             });
-
-
-            const data = await res.json();
-
-            if (res.ok) {
-                console.log('Tracking status:', data);
-                alert(`Order status: ${data.data?.order_status}`);
-            } else {
-                alert(`Failed to fetch status: ${data.message}`);
-            }
-
         } catch (err) {
-            alert(`Error: ${err.message}`);
+            setError(err.message || 'Something went wrong. Please try again.');
+            console.error('Order submission error:', err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -79,7 +94,9 @@ const PurchasePage = () => {
                         <div>
                             <label className="block text-gray-700 mb-2">Shipping Address</label>
                             <textarea
-                                name="address"
+                                name="shippingAddress"
+                                value={formData.shippingAddress}
+                                onChange={handleChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 rows="3"
                                 required
@@ -89,30 +106,29 @@ const PurchasePage = () => {
                         <div>
                             <label className="block text-gray-700 mb-2">Payment Method</label>
                             <select
-                                name="payment"
+                                name="paymentMethod"
+                                value={formData.paymentMethod}
+                                onChange={handleChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                                <option>Credit Card</option>
-                                <option>PayPal</option>
-                                <option>Bank Transfer</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="PayPal">PayPal</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
                             </select>
                         </div>
 
+                        {error && (
+                            <div className="text-red-500 text-center">{error}</div>
+                        )}
+
                         <button
                             type="submit"
-                            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-md text-lg font-semibold transition-colors duration-300"
+                            disabled={loading}
+                            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-md text-lg font-semibold transition-colors duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Confirm Purchase
+                            {loading ? 'Processing...' : 'Confirm Purchase'}
                         </button>
-                        <button
-                            onClick={() => checkTrackingStatus('PA123456789')}
-                            className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
-                        >
-                            Check Order Status
-                        </button>
-
                     </form>
-
                 </div>
             </div>
         </div>
